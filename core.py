@@ -1,5 +1,11 @@
 from typing import Dict
 import pandas as pd
+# 
+#Data practice assistant chatbot
+#Implement API calls to live Dataset searches
+#Needs practice assistant class, template loader, 
+#dataset rendering, and file save function
+#
 
 class DatasetAssistant:
     def __init__(self, loader):
