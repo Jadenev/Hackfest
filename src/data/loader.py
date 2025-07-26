@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 import warnings
+import matplotlib as plt
 
 class DatasetLoader:
     def __init__(self, config_path: str = "datasets.json"):
