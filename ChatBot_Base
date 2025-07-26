@@ -1,0 +1,495 @@
+#                                                                       Atlas - The Personal Assisstant                                                                       #
+
+
+
+""" Libraries """
+from speech_recognition import Recognizer, AudioFile
+from cgi import test
+from ssl import Options
+from os import name, system
+from selenium import webdriver
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
+from selenium.common.exceptions import TimeoutException
+from pyaudio import PyAudio
+from gtts import gTTS
+from ctypes import cast, POINTER
+from comtypes import CLSCTX_ALL
+from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
+from password import emailName, emailPassword
+from datetime import date
+from openpyxl import *
+from email.message import EmailMessage
+from twilio.rest import Client
+from clint.textui import progress
+from ecapture import ecapture as ec
+from googleapiclient.discovery import build
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
+from playsound import playsound
+from bs4 import BeautifulSoup
+from urllib.request import urlopen
+import subprocess
+import pipwin
+import wolframalpha
+import pyttsx3
+import pywhatkit
+import tkinter
+import json
+import random
+import operator
+import speech_recognition as sr
+import wave
+import datetime
+import wikipedia
+import webbrowser
+import os
+import winshell
+import pyjokes
+import yagmail
+import feedparser
+import smtplib
+import ctypes
+import random
+import requests
+import shutil
+import time
+import calendar
+import pyautogui
+import pyttsx3
+import win32com.client as wincl
+import urllib.request
+import urllib.parse
+import sys
+import re
+import getpass
+import pickle
+import warnings
+import os.path
+import datetime
+import os
+import playsound
+import pyttsx3
+
+
+""" Variables """
+r = sr.Recognizer()
+keywords = [("atlas", 1), ("hey atlas", 1), ("okay atlas", 1), ("hi atlas", 1), ("ok atlas", 1)] # Setting up our 'Wake' words
+source = sr.Microphone() #Setting up which mic we are using
+
+
+""" Functions """
+def speak(text): #Used for speaking ability
+    rate = 100 #Sets the default rate of speech
+    engine = pyttsx3.init() #Initialises the speech engine
+    voices = engine.getProperty('voices') #Sets the properties for speech
+    engine.setProperty('voice', voices[0].id) #Gender and type of voice
+    engine.setProperty('rate', rate+50) #Adjusts the rate of speech
+    engine.say(text) #Tells Python to speak variable 'text'
+    engine.runAndWait() #Waits for speech to finish and then continues with program
+    volume = engine.getProperty("volume")
+    print("volume is {0}".format(volume))
+    engine.setProperty("volume", 1)
+
+def wishMe(): #Greeting
+        hour = int(datetime.datetime.now().hour)
+        if hour >= 0 and hour < 12:
+            speak("Good Morning Adil!")
+        elif hour >= 12 and hour < 15:
+            speak("Good Afternoon Adil!")
+        else:
+            speak('Good Evening Adil')
+        time.sleep(2)
+        
+def callback(recognizer, audio): 
+    try:
+        speech_as_text = recognizer.recognize_sphinx(audio, keyword_entries=keywords) #Uses Sphinx to recognise speech
+        print(speech_as_text) #Prints what was said on the screen
+        if "atlas" in speech_as_text or "hey atlas" or "hi atlas" or "okay atlas" or "ok atlas": #Starter names
+            speak("Yea? What's up?") #Calls 'Speak' and acknowledges user
+            takeCommand() #Runs the function recognize_main
+    except sr.UnknownValueError: #If there is nothing understood
+        print("Oops! Didn't catch that") #Prints to screen error message
+        
+def start_recognizer(): #Initial keyword call
+    print("Waiting for activation through the secret code...") #Prints to screen
+    r.listen_in_background(source, callback) #Sets off recognition sequence
+    time.sleep(100000000000000000000000) #Keeps loop running
+    
+def takeCommand(): #Main reply call function
+    
+    r = sr.Recognizer() # sets r variable
+    
+    with sr.Microphone() as source: #sets microphone
+        
+        print("Listening...")
+        speak("Listening to your command")
+        r.pause_threshold = 1
+        r.adjust_for_ambient_noise(source, 2)
+        audio = r.listen(source)
+    
+    try:
+        print("Recognizing...") 
+        speak("Recognizing your command")  
+        query = r.recognize_google(audio, language ='en-in')
+        query.lower()
+        print(f"You have told: {query}\n")
+        
+    except Exception as e:
+        print(e)   
+        print("I'm Sorry, I am unable to recognize your voice. Please try again!") 
+        speak("I'm Sorry, I am unable to recognize your voice. Please try again!")
+        return "None"
+    
+    return query
+
+if __name__ == '__main__':
+        clear = lambda: os.system('cls')
+     
+    # This Function will clean any
+    # command before execution of this python file
+        clear()
+        wishMe()
+     
+        while True:
+         
+            query = takeCommand().lower()
+
+            driver = webdriver.Edge(executable_path="""D:\Adil Sukumar's Folder\Coding\Personal Assistant\MicrosoftWebDriver""")
+
+            if "hello atlas" or 'hi atlas' or 'hey atlas' or 'hello bud' or 'hi bud' or 'hey bud' or 'ok atlas' or 'ok bud' in query:
+                list_a = ['Hey There Bud!', 'Hey There Buddy!', 'Hey There!', 'Hey Dude!', 'Hey Bud!', 'Hey!', 'Hi!', 'Hi There!', 'Hi Bud!', 'Hi Buddy!']
+                a = random.choice(list_a)
+                print(a)
+                speak(a)
+            
+            elif 'how are you' or 'how are you atlas' or "how're you" or 'how are you doing' or 'how are you doing atlas' in query:
+                list_b = ["I'm good, thank you!", "I'm fine, thank you!", "I'm great, thank you!", "I'm good", "I'm great", "I'm fine"]
+                b = random.choice(list_b)
+                print(b)
+                speak(b)
+            
+            elif "what is the time now" or "what is the time" or "whats the time" or "time now" or "time" in query:
+                strTime=datetime.datetime.now().strftime("%H:%M:%S")
+                print(f"The time is {strTime}")
+                speak(f"The time is {strTime}")
+            
+            elif "what is the day today" or "what is the day" or "whats the day" or "day today" or "day" in query:
+                day = datetime.datetime.today().weekday() + 1
+     
+                Day_dict = {1: 'Monday', 2: 'Tuesday', 3: 'Wednesday',
+                            4: 'Thursday', 5: 'Friday', 6: 'Saturday',
+                            7: 'Sunday'}
+
+                if day in Day_dict.keys():
+                    day_of_the_week = Day_dict[day]
+                    print("It is " + day_of_the_week)
+                    speak("It is " + day_of_the_week)
+                    time.sleep(2)
+
+            elif 'search wikipedia' or 'who is' in query:
+                speak('Searching Wikipedia...')
+                print('Searching Wikipedia!')
+                query = query.replace("wikipedia", "")
+                results = wikipedia.summary(query, sentences=5)
+                speak("According to Wikipedia")
+                print(results)
+                speak(results)
+                
+            elif "word" or "open word document" or "open word" in query:
+                speak("Opening Microsoft Word")
+                print("Opening Microsoft Word")
+                os.startfile('C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Microsoft Office 2013\Word 2013.lnk')
+  
+            elif "excel" or "open excel" or "open excel document" in query:
+                speak("Opening Microsoft Excel")
+                print("Opening Microsoft Excel")
+                os.startfile('C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Microsoft Office 2013\Excel 2013.lnk')
+                
+            #elif 'exit' in query or 'bye forever' in query:
+                #speak("Turn me on when you need me! Bye!")
+                #print("Turn me on when you need me! Bye!")
+                #sys.exit()
+                
+            #elif 'sleep' in query:
+                #speak("Turn me on when you need me! Bye!")
+                #print("Turn me on when you need me! Bye!")
+                #sys.exit()
+   
+            elif 'open youtube' in query:
+                speak("Going to Youtube\n")
+                print("Going to Youtube!\n")
+                webbrowser.open("https://www.youtube.com")
+                
+            #elif 'search in youtube' in query or 'youtube' in query:
+        
+            #elif 'send an email' in query or 'send a mail to' in query:
+                
+                
+                    
+            elif 'open gmail' in query or 'open mail' in query:
+                speak("Going to Gmail! Happy Email!\n")
+                print("Going to Gmail! Happy Email!")
+                webbrowser.open("https://mail.google.com")
+                
+            elif 'open code' in query or 'open vs code' in query:
+                speak("Opening V S Code, Happy Coding!")
+                print("Opening V.S. Code, Happy Coding")
+                pyautogui.press('Win', interval =0.2)
+                pyautogui.write('Visual Studio Code', interval =0.1)
+                pyautogui.press('Enter', interval =0.2)
+    
+            elif 'open google' in query:
+                speak("Going to Google\n")
+                print("Going to Google!")
+                webbrowser.open("https://www.google.com")
+ 
+            elif 'search' or 'google' in query:
+                query = query.replace("search", "")
+                query = query.replace("google", "")         
+                webbrowser.open(query)
+    
+            elif 'stack over flow' in query:
+                speak("Going to Stack Over Flow. Hope You can find the solution to your problem")
+                print("Going to StackOverFlow! Hope You can find the solution to your problem!")
+                webbrowser.open("https://www.stackoverflow.com")  
+    
+            elif 'play music' in query or "play songs" in query:
+                speak("Here you go with your music playlist")
+                print("Here you go! Your Music Playlist")
+                music_dir = "G:\\Song"
+                music_dir = "C:\\Users\\GAURAV\\Music"
+                songs = os.listdir(music_dir)
+                print(songs)   
+                random = os.startfile(os.path.join(music_dir, songs[1]))
+
+            elif 'how are you' in query:
+                speak("I am very well just because of you, Adil!")
+                print("I am very well just because of you, Adil!")
+                speak("How are you doing Adil?")
+                print("How are you doing Adil?")
+    
+            elif 'fine' in query or "good" in query:
+                speak("I am so glad to know that your doing well! Enjoy and Truly Live every moment of your life!")
+                print("I am so glad to know your doing well! Enjoy and Truly Live every moment of your Life!")
+    
+            elif "what's your name" in query or "What is your name" in query:
+                speak("My friends call me, Atlas!")
+                print("My friends call me, Atlas!")
+    
+            elif "who made you" in query or "who created you" in query:
+                speak("I have been created by a very lovely person who is none other than, Adil Sukumar!")
+                print("I have been created by a very lovely person who is none other than, Adil Sukumar!")
+            
+            elif 'tell me a joke' in query:
+                speak(pyjokes.get_joke())
+                print(pyjokes.get_joke())
+
+            elif "calculate" in query:            
+                app_id = "JPH8PU-XVKHYXULYQ"
+                client = wolframalpha.Client(app_id)
+                indx = query.lower().split().index('calculate')
+                query = query.split()[indx + 1:]
+                res = client.query(' '.join(query))
+                answer = next(res.results).text
+                print("The answer is " + answer)
+                speak("The answer is " + answer)
+ 
+            elif 'power point presentation' in query:
+                speak("Opening your Power Point presentation! Good Luck Presenting!")
+                print("Opening Your Powerpoint Presentation! Good Luck Presenting!")
+                #power = r"C:\\Users\\GAURAV\\Desktop\\Minor Project\\Presentation\\Voice Assistant.pptx"
+                #os.startfile(power)
+ 
+            elif "who are you" in query:
+                speak("I am your best friend aka your favourite personal assistant!")
+                print("I am your Best Friend AkA your Favourite Personal Assistant!")
+ 
+            elif "motivate me" in query:
+                speak("Today, you will do what other wont, so tomorrow you can do what others cant!")
+                print("Today, you will do what others wont so tomorrow you can do what others can't!")    
+        
+            elif 'news' in query:     
+                try:
+                    jsonObj = urlopen('''https://newsapi.org / v1 / articles?source = the-times-of-india&sortBy = top&apiKey =\\times of India Api key\\''')
+                    data = json.load(jsonObj)
+                    i = 1
+
+                    speak('here are some top news from the times of india')
+                    print('''=============== TIMES OF INDIA ============'''+ '\n')
+
+                    for item in data['articles']:
+                        print(str(i) + '. ' + item['title'] + '\n')
+                        print(item['description'] + '\n')
+                        speak(str(i) + '. ' + item['title'] + '\n')
+                        i += 1
+                except Exception as e:
+                    print(str(e))
+
+            elif 'lock the device' in query:
+                speak("locking the device")
+                ctypes.windll.user32.LockWorkStation()
+                print("Locking the Device!")
+ 
+            elif 'shutdown system' in query:
+                speak("Hold On a Second Your system is on its way to shut down")
+                print("Hold On a Sec! Your system is on its way to shut down!")
+                subprocess.call('shutdown / p /f')
+                 
+            elif 'empty recycle bin' in query:
+                winshell.recycle_bin().empty(confirm = False, show_progress = False, sound = True)
+                speak("Recycle Bin has been emptied!")
+                print("Recycle Bin Recycled!")
+ 
+            elif "where is" in query:
+                query = query.replace("where is", "")
+                location = query
+                speak("User asked to Locate")
+                speak(location)
+                webbrowser.open("https://www.google.com/maps/place/" + location + "")
+    
+            elif "camera" in query or "take a photo" in query:
+                ec.capture(0, "Atlas Camera ", "img.jpg")
+ 
+            elif "restart" in query:
+                subprocess.call(["shutdown", "/r"])
+                speak("Restarting Your Computer!")
+                print("Restarting Your Computer!")
+
+            elif "hibernate" in query or "sleep" in query:
+                speak("Hibernating Your Computer")
+                print("Hibernating Your Computer")
+                subprocess.call("shutdown / h")
+ 
+            elif "write a note" in query:
+                speak("What should i write?")
+                print("What should I write?")
+                note = takeCommand()
+                file = open('Atlas.txt', 'w')
+                speak("Should i include the date and the time?")
+                print("Should I include the date and the time?")
+                snfm = takeCommand()
+                if 'yes' in snfm or 'sure' in snfm:
+                    strTime = datetime.datetime.now().strftime("%H:%M:%S")
+                    file.write(strTime)
+                    file.write(" :- ")
+                    file.write(note)
+                else:
+                    file.write(note)
+     
+            elif "show note" in query:
+                speak("Showing Notes")
+                print("Showing Notes")
+                file = open("atlas.txt", "r")
+                print(file.read())
+                speak(file.read(6))
+    
+            elif "weather" in query:
+             
+                # Google Open weather website
+                # to get API of Open weather
+                api_key = "3d220eac9d606ab3a2772f81c5d932d2"
+                base_url = "http://api.openweathermap.org/data/2.5/weather?"
+                speak(" City name ")
+                print("City name : ")
+                city_name = takeCommand()
+                complete_url = base_url + "appid = 3d220eac9d606ab3a2772f81c5d932d2" + api_key + "&q =" + city_name
+                response = requests.get(complete_url)
+                x = response.json()
+             
+                if x["cod"] != "404":
+                    y = x["main"]
+                    current_temperature = y["temp"] - 273.15
+                    current_pressure = y["pressure"]
+                    current_humidiy = y["humidity"]
+                    z = x["weather"]
+                    weather_description = z[0]["description"]
+                    print(" Temperature (in celsius unit) = " +str(current_temperature)+"\n Atmospheric Pressure (in hPa unit) ="+str(current_pressure) +"\n Humidity (in percentage) = " +str(current_humidiy) +"\n Description = " +str(weather_description))
+                    speak(" Temperature (in celsius unit) = " +str(current_temperature)+"\n Atmospheric Pressure (in hPa unit) ="+str(current_pressure) +"\n Humidity (in percentage) = " +str(current_humidiy) +"\n Description = " +str(weather_description))
+
+                else:
+                    speak(" City Not Found ")
+                
+            elif "open wikipedia" in query:
+                webbrowser.open("https://www.wikipedia.com")
+                speak("Opening Wikipedia!")
+                print("Opening Wikipedia!")
+
+            elif "Good Morning" in query:
+                speak("A warm" +query)
+                print("A warm Good Morning!")
+                speak("How are you Adil?")
+                print("How are you Adil?")
+            
+            elif "Good Afternoon" in query:
+                speak("A warm" +query)
+                print("A warm Good Afternoon!")
+                speak("How are you Adil?")
+                print("How are you Adil?")
+            
+            elif "Good Evening" in query:
+                speak("A warm" + query)
+                print("A warm Good Evening!")
+                speak("How are you Adil?")
+                print("How are you Adil?")
+            
+            elif "Good Night" in query:
+                speak("A warm" + query)
+                print("A warm Goood Night!")
+                speak("Have a Good night, Sleep Tight, Sweet Dreams Adil!")
+                print("Have a Good Night, Sleep TIght, Sweet Dreams Adil!")
+            
+            
+            
+
+
+
+#1
+#2
+#3
+
+
+def send_email(reciever, subject, message):
+    server = smtplib.SMTP('smtp.gmail.com', 587)
+    server.starttls()
+    # Put your email address and password
+    server.login(emailName, emailPassword)
+    email = EmailMessage()
+    email['From'] = 'Sender_Email'
+    email['To'] = reciever
+    email['Subject'] = subject
+    email.set_content(message)
+    server.send_message(email)
+    
+email_list = {
+    'Arnesh' : 'arneshsukumar@gmail.com',
+    'Arnesh two' : 'sukumararnesh@gmail.com',
+    'Adil' : 'adilsukumar24@gmail.com',
+    'Mum' : 'yegna.aa@gmail.com',
+    'Arnesh Adil' : 'arneshadilinvests@gmail.com',
+    'Pleasant Melody' : 'OfficialPleasantMelody@gmail.com',
+    'Share Market' : 'Boost.Your.Gains@gmail.com',
+    'School Account' : 'adilsukumar8674@kpcvs.co.in'
+    }
+
+#def get_email_info():
+   
+
+         
+                # All the commands said by user will be
+                # stored here in 'query' and will be
+                # converted to lower case for easily
+                # recognition of command
+                
+driver = webdriver.Edge(executable_path="""D:\Personal Assistant\MicrosoftWebDriver""")
+                
+            
+ 
+            # elif "" in query:
+                # Command go here
+                # For adding more commands
+                
+                
+                
+              
