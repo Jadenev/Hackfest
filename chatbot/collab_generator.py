@@ -1,4 +1,5 @@
 # chatbot/colab_generator.py
+from loader import DatasetLoader
 import json
 from pathlib import Path
 from datetime import datetime

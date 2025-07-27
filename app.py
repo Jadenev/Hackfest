@@ -1,7 +1,9 @@
 import streamlit as st
+import sys
+import os
 from loader import DatasetLoader
 from chatbot.integration import DataDevChatbot
-from chatbot.colab_generator import ColabGenerator
+from chatbot.collab_generator import ColabGenerator
 import time
 
 # ========== SETUP ========== #

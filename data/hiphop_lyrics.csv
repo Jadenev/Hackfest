@@ -1,0 +1,4 @@
+artist,song,year,lyrics,word_count,sentiment_score,explicit
+Kendrick Lamar,HUMBLE.,2017,lyrics here,320,0.8,1
+J. Cole,Love Yourz,2014,lyrics here,280,0.9,0
+Drake,God's Plan,2018,lyrics here,240,0.7,1

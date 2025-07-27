@@ -1,0 +1,88 @@
+{
+    "datasets": {
+      "avengers": {
+        "file_path": "/Users/jadepro13/Documents/GitHub/Hackfest/data/avengers.csv",
+        "title": "Marvel Avengers Dataset",
+        "description": "Contains characteristics of Marvel Avengers characters including powers, appearances, and comic book history.",
+        "source": "Marvel Wiki (2023)",
+        "difficulty": "beginner",
+        "columns": {
+          "name": "Full name of the character",
+          "alias": "Primary superhero alias",
+          "gender": "Character's gender identity",
+          "year_introduced": "First comic book appearance year",
+          "num_appearances": "Total comic appearances count",
+          "has_super_strength": "Boolean (1/0) indicating super strength",
+          "has_flight": "Boolean (1/0) indicating flight capability",
+          "intelligence_score": "Ranking from 1-10 of intelligence"
+        },
+        "sample_exercise_code": "# Count characters by gender\ndf['gender'].value_counts()\n\n# Find most common powers\npowers = ['has_super_strength', 'has_flight']\ndf[powers].sum().sort_values(ascending=False)",
+        "example_questions": [
+          "Which gender has more super strength?",
+          "Is there correlation between introduction year and appearances?"
+        ]
+      },
+      "majors": {
+        "file_path": "/Users/jadepro13/Documents/GitHub/Hackfest/data/college_majors.csv",
+        "title": "College Majors Analysis",
+        "description": "Employment data for recent college graduates by major, including median salaries and unemployment rates.",
+        "source": "American Community Survey 2018",
+        "difficulty": "intermediate",
+        "columns": {
+          "major_code": "Unique identifier for the major",
+          "major": "Name of the college major",
+          "major_category": "Broad discipline category",
+          "total_students": "Number of graduates surveyed",
+          "employed": "Count of employed graduates",
+          "unemployed": "Count of unemployed graduates",
+          "median_salary": "Median annual salary in USD"
+        },
+        "sample_exercise_code": "# Find top 5 highest paying majors\ndf.nlargest(5, 'median_salary')[['major', 'median_salary']]\n\n# Compare unemployment by category\ndf.groupby('major_category')['unemployed'].mean().sort_values()",
+        "example_questions": [
+          "Which major category has the lowest unemployment?",
+          "What's the salary distribution across categories?"
+        ]
+      },
+      "lyrics": {
+        "file_path": "/Users/jadepro13/Documents/GitHub/Hackfest/data/hiphop_lyrics.csv",
+        "title": "Hip-Hop Lyrics Analysis",
+        "description": "Over 10,000 hip-hop lyrics with metadata including artist, year, and sentiment scores.",
+        "source": "Genius.com API",
+        "difficulty": "advanced",
+        "columns": {
+          "artist": "Performing artist name",
+          "song": "Song title",
+          "year": "Release year",
+          "lyrics": "Full text of lyrics",
+          "word_count": "Total words in lyrics",
+          "sentiment_score": "Sentiment analysis score (-1 to 1)",
+          "explicit": "Boolean flag for explicit content"
+        },
+        "sample_exercise_code": "# Find most frequent words\nfrom collections import Counter\nwords = ' '.join(df['lyrics']).split()\nCounter(words).most_common(20)\n\n# Track sentiment over time\ndf.groupby('year')['sentiment_score'].mean().plot()",
+        "example_questions": [
+          "How has lyrical sentiment changed over time?",
+          "Which artists use the most explicit language?"
+        ]
+      },
+      "masculinity": {
+        "file_path": "/Users/jadepro13/Documents/GitHub/Hackfest/data/masculinity_survey.csv",
+        "title": "Masculinity Survey Results",
+        "description": "Survey data on American men's attitudes about masculinity from Pew Research Center.",
+        "source": "Pew Research (2019)",
+        "difficulty": "intermediate",
+        "columns": {
+          "age_group": "5-year age brackets (18-24, 25-29, etc.)",
+          "education": "Highest education level completed",
+          "income_bracket": "Annual household income range",
+          "feels_pressure_to_be_masculine": "Likert scale response (1-5)",
+          "traits_considered_important": "Semicolon-delimited list of traits",
+          "comfort_level_with_emotions": "Self-reported comfort (1-10 scale)"
+        },
+        "sample_exercise_code": "# Compare pressure by age group\ndf.groupby('age_group')['feels_pressure_to_be_masculine'].mean().sort_values()\n\n# Cross-tab education vs comfort with emotions\npd.crosstab(df['education'], df['comfort_level_with_emotions'])",
+        "example_questions": [
+          "Does income affect feelings about masculinity?",
+          "How do education levels correlate with emotional comfort?"
+        ]
+      }
+    }
+  }
