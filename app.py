@@ -1,6 +1,4 @@
 import streamlit as st
-import sys
-import os
 from loader import DatasetLoader
 from chatbot.integration import DataDevChatbot
 from chatbot.collab_generator import ColabGenerator
@@ -13,30 +11,69 @@ st.set_page_config(
     page_icon="🌱"
 )
 
-# Initialize core components
-loader = DatasetLoader()
-
-# Custom CSS for UI polish
+# Custom CSS for improved visibility and styling
 st.markdown("""
 <style>
+    /* Main sidebar styling */
     [data-testid="stSidebar"] {
         background: linear-gradient(180deg, #4e79a7 0%, #2e4a6b 100%);
     }
+    
+    /* Dataset cards - improved contrast */
     .dataset-card {
         border-radius: 10px;
         padding: 15px;
         margin: 10px 0;
-        background-color: white;
+        background-color: #ffffff;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        color: #333333 !important;
+        border-left: 4px solid #4e79a7;
     }
-    .assistant-message {
-        background-color: #f0f8ff;
-        border-radius: 15px;
+    .dataset-card h4 {
+        color: #2e4a6b !important;
+        margin-top: 0;
+        font-size: 1.1rem;
+    }
+    .dataset-card p {
+        color: #555555 !important;
+        margin-bottom: 10px;
+        font-size: 0.9rem;
+    }
+    .dataset-card small {
+        color: #666666 !important;
+        font-size: 0.8rem;
+    }
+    
+    /* Chat bubbles */
+    .stChatMessage {
         padding: 12px;
-        margin: 5px 0;
+    }
+    [data-testid="stChatMessageContent"] {
+        font-size: 1rem;
+    }
+    
+    /* Quick action buttons */
+    .stButton>button {
+        border: 1px solid #4e79a7 !important;
+        background-color: #f0f8ff !important;
+        color: #2e4a6b !important;
+        width: 100%;
+        transition: all 0.3s;
+    }
+    .stButton>button:hover {
+        background-color: #e0f0ff !important;
+        border-color: #3e699b !important;
+    }
+    
+    /* Expander header */
+    .stExpander [data-testid="stExpanderToggleIcon"] {
+        color: #4e79a7 !important;
     }
 </style>
 """, unsafe_allow_html=True)
+
+# Initialize core components
+loader = DatasetLoader()
 
 # ========== SIDEBAR ========== #
 with st.sidebar:
@@ -57,22 +94,22 @@ with st.sidebar:
         <div class="dataset-card">
             <h4>{dataset.attrs.get('title', selected_dataset.title())}</h4>
             <p>{dataset.attrs.get('description', '')}</p>
-            <div style="color: #666; font-size: 0.8em;">
-                <b>Columns:</b> {', '.join(dataset.columns[:5])}...
+            <div style="margin-top: 10px;">
+                <small><b>Columns:</b> {', '.join(dataset.columns[:5])}...</small>
             </div>
         </div>
         """, unsafe_allow_html=True)
 
 # ========== MAIN INTERFACE ========== #
-st.title("miniDataDev")
-st.caption("Your gentle guide to data mastery")
+st.title("Data Skills Coach")
+st.caption("Practice real data skills with guided assistance")
 
 # Initialize chatbot session state
 if 'chatbot' not in st.session_state:
     st.session_state.chatbot = DataDevChatbot(loader)
 if 'messages' not in st.session_state:
     st.session_state.messages = [
-        {"role": "assistant", "content": "Hi! I'm your data mentor. Select a dataset and ask me anything about it!"}
+        {"role": "assistant", "content": "Hi! I'm your data mentor. Select a dataset and ask me anything!"}
     ]
 
 # Display chat history
@@ -80,26 +117,29 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# Clear chat button
-if st.button("🔄 Clear Chat"):
-    st.session_state.messages = [
-        {"role": "assistant", "content": "Chat cleared! What would you like to explore?"}
-    ]
-    st.rerun()
-
 # Quick action buttons
-with st.expander("🚀 Quick Actions"):
+with st.expander("🚀 Quick Actions", expanded=True):
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("Explain Dataset"):
-            # Auto-trigger explanation
-            st.session_state.messages.append({"role": "user", "content": "Explain this dataset"})
-            st.rerun()
+        if st.button("📋 Explain Dataset", use_container_width=True, key="explain_btn"):
+            if 'dataset_selector' in st.session_state:
+                st.session_state.messages.append({
+                    "role": "user",
+                    "content": f"Explain the {st.session_state.dataset_selector} dataset"
+                })
+                st.rerun()
+            else:
+                st.warning("Please select a dataset first")
     with col2:
-        if st.button("Suggest Exercise"):
-            # Auto-trigger exercise
-            st.session_state.messages.append({"role": "user", "content": "Suggest an exercise"})
-            st.rerun()
+        if st.button("💪 Suggest Exercise", use_container_width=True, key="exercise_btn"):
+            if 'dataset_selector' in st.session_state:
+                st.session_state.messages.append({
+                    "role": "user", 
+                    "content": f"Suggest an exercise for {st.session_state.dataset_selector}"
+                })
+                st.rerun()
+            else:
+                st.warning("Please select a dataset first")
 
 # Chat input and processing
 if prompt := st.chat_input("Ask about datasets or request exercises..."):
@@ -112,15 +152,13 @@ if prompt := st.chat_input("Ask about datasets or request exercises..."):
     
     # Generate assistant response with typing indicator
     with st.chat_message("assistant"):
-        with st.spinner("Thinking..."):
-            # Get response from chatbot
+        with st.spinner("Analyzing..."):
             response = st.session_state.chatbot.respond(
                 prompt,
                 st.session_state.get("dataset_selector")
             )
-            time.sleep(0.5)  # minimum delay UX
+            time.sleep(0.3)  # Small delay for better UX
             
-        # Display full response
         st.markdown(response)
     
     # Add assistant response to history
@@ -136,5 +174,6 @@ if prompt := st.chat_input("Ask about datasets or request exercises..."):
             "📥 Download Notebook",
             data=notebook_json,
             file_name=f"{st.session_state.dataset_selector}_practice.ipynb",
-            mime="application/json"
+            mime="application/json",
+            key=f"notebook_{st.session_state.dataset_selector}"
         )
