@@ -1,179 +1,187 @@
+import os
+import base64
 import streamlit as st
-from loader import DatasetLoader
+from data_loader.loader import DatasetLoader
+from chatbot.explainer import Explainer
+from chatbot.colab_generator import ColabGenerator
+from chatbot.kaggle_fetcher import KaggleDatasetFetcher
 from chatbot.integration import DataDevChatbot
-from chatbot.collab_generator import ColabGenerator
-import time
 
-# ========== SETUP ========== #
-st.set_page_config(
-    page_title="miniDataDev - Your Friendly Data Coach",
-    layout="wide",
-    page_icon="🌱"
-)
-
-# Custom CSS for improved visibility and styling
+# Custom CSS styling
 st.markdown("""
 <style>
-    /* Main sidebar styling */
-    [data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #4e79a7 0%, #2e4a6b 100%);
+    .stApp {
+        background-color: #5b8cba;
+        background-image: linear-gradient(315deg, #5b8cba 0%, #4a6fa5 74%);
     }
-    
-    /* Dataset cards - improved contrast */
-    .dataset-card {
-        border-radius: 10px;
+    .title-wrapper {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    .title-emoji {
+        font-size: 2.5rem;
+        margin-right: 10px;
+    }
+    .title-text {
+        color: #f0f8ff;
+        font-weight: 700;
+        text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+    }
+    .notebook-link {
+        background-color: rgba(255,255,255,0.9);
         padding: 15px;
+        border-radius: 10px;
+        margin: 15px 0;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        border-left: 4px solid #f0f8ff;
+    }
+    .download-btn {
+        background-color: #4a6fa5 !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 8px !important;
+        padding: 8px 16px !important;
+    }
+    .chat-container {
+        background-color: rgba(255,255,255,0.9);
+        padding: 20px;
+        border-radius: 12px;
         margin: 10px 0;
-        background-color: #ffffff;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        color: #333333 !important;
-        border-left: 4px solid #4e79a7;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
-    .dataset-card h4 {
-        color: #2e4a6b !important;
-        margin-top: 0;
-        font-size: 1.1rem;
+    .stTextInput>div>div>input {
+        background-color: rgba(255,255,255,0.9) !important;
+        border-radius: 8px !important;
+        padding: 10px !important;
     }
-    .dataset-card p {
-        color: #555555 !important;
-        margin-bottom: 10px;
-        font-size: 0.9rem;
-    }
-    .dataset-card small {
-        color: #666666 !important;
-        font-size: 0.8rem;
-    }
-    
-    /* Chat bubbles */
-    .stChatMessage {
-        padding: 12px;
-    }
-    [data-testid="stChatMessageContent"] {
-        font-size: 1rem;
-    }
-    
-    /* Quick action buttons */
     .stButton>button {
-        border: 1px solid #4e79a7 !important;
-        background-color: #f0f8ff !important;
-        color: #2e4a6b !important;
-        width: 100%;
-        transition: all 0.3s;
+        border-radius: 8px !important;
+        padding: 8px 16px !important;
+        transition: all 0.3s !important;
     }
     .stButton>button:hover {
-        background-color: #e0f0ff !important;
-        border-color: #3e699b !important;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
     }
-    
-    /* Expander header */
-    .stExpander [data-testid="stExpanderToggleIcon"] {
-        color: #4e79a7 !important;
+    .st-chat-message {
+        padding: 12px 16px !important;
+        border-radius: 12px !important;
+        margin: 8px 0 !important;
+    }
+    .user-message {
+        background-color: #e3f2fd !important;
+    }
+    .assistant-message {
+        background-color: #f5f5f5 !important;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# Initialize core components
-loader = DatasetLoader()
+@st.cache_resource
+def load_services():
+    """Initialize and return all service components"""
+    try:
+        loader = DatasetLoader()
+        explainer = Explainer(loader)
+        notebook_builder = ColabGenerator()
+        kaggle_fetcher = KaggleDatasetFetcher(api_key=os.getenv('KAGGLE_API_KEY'))
+        
+        chatbot = DataDevChatbot(
+            loader=loader,
+            explainer=explainer,
+            notebook_builder=notebook_builder,
+            kaggle_fetcher=kaggle_fetcher
+        )
+        return loader, explainer, notebook_builder, kaggle_fetcher, chatbot
+    except Exception as e:
+        st.error(f"Service initialization failed: {str(e)}")
+        raise
 
-# ========== SIDEBAR ========== #
-with st.sidebar:
-    st.title("🌱 miniDataDev")
-    st.markdown("**Your friendly data skills coach**")
+def main():
+    # Custom title with emoji and styling
+    st.markdown("""
+    <div class="title-wrapper">
+        <div class="title-emoji">🌿</div>
+        <div class="title-text"><h1>miniDataDev</h1></div>
+    </div>
+    <p style='color:#f0f8ff; font-size: 1.1rem;'>Your friendly data analysis assistant</p>
+    """, unsafe_allow_html=True)
     
-    # Dataset selector
-    selected_dataset = st.selectbox(
-        "Choose a dataset:",
-        loader.list_datasets(),
-        key="dataset_selector"
-    )
-    
-    # Dataset info card
-    if selected_dataset:
-        dataset = loader.load_dataset(selected_dataset)
-        st.markdown(f"""
-        <div class="dataset-card">
-            <h4>{dataset.attrs.get('title', selected_dataset.title())}</h4>
-            <p>{dataset.attrs.get('description', '')}</p>
-            <div style="margin-top: 10px;">
-                <small><b>Columns:</b> {', '.join(dataset.columns[:5])}...</small>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+    try:
+        with st.spinner("Loading services..."):
+            loader, explainer, notebook_builder, kaggle_fetcher, chatbot = load_services()
 
-# ========== MAIN INTERFACE ========== #
-st.title("Data Skills Coach")
-st.caption("Practice real data skills with guided assistance")
+        # Initialize chat history
+        if "messages" not in st.session_state:
+            st.session_state.messages = [{"role": "assistant", "content": "Hello! I can help you analyze datasets. Ask me anything!"}]
 
-# Initialize chatbot session state
-if 'chatbot' not in st.session_state:
-    st.session_state.chatbot = DataDevChatbot(loader)
-if 'messages' not in st.session_state:
-    st.session_state.messages = [
-        {"role": "assistant", "content": "Hi! I'm your data mentor. Select a dataset and ask me anything!"}
-    ]
-
-# Display chat history
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
-
-# Quick action buttons
-with st.expander("🚀 Quick Actions", expanded=True):
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("📋 Explain Dataset", use_container_width=True, key="explain_btn"):
-            if 'dataset_selector' in st.session_state:
-                st.session_state.messages.append({
-                    "role": "user",
-                    "content": f"Explain the {st.session_state.dataset_selector} dataset"
-                })
-                st.rerun()
-            else:
-                st.warning("Please select a dataset first")
-    with col2:
-        if st.button("💪 Suggest Exercise", use_container_width=True, key="exercise_btn"):
-            if 'dataset_selector' in st.session_state:
-                st.session_state.messages.append({
-                    "role": "user", 
-                    "content": f"Suggest an exercise for {st.session_state.dataset_selector}"
-                })
-                st.rerun()
-            else:
-                st.warning("Please select a dataset first")
-
-# Chat input and processing
-if prompt := st.chat_input("Ask about datasets or request exercises..."):
-    # Add user message to history
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    
-    # Display user message immediately
-    with st.chat_message("user"):
-        st.markdown(prompt)
-    
-    # Generate assistant response with typing indicator
-    with st.chat_message("assistant"):
-        with st.spinner("Analyzing..."):
-            response = st.session_state.chatbot.respond(
-                prompt,
-                st.session_state.get("dataset_selector")
-            )
-            time.sleep(0.3)  # Small delay for better UX
+        col1, col2 = st.columns([1, 2])
+        
+        with col1:
+            st.subheader("📂 Datasets", divider="blue")
+            dataset_names = loader.list_datasets()
+            selected_dataset = st.selectbox("Choose a dataset", dataset_names)
             
-        st.markdown(response)
-    
-    # Add assistant response to history
-    st.session_state.messages.append({"role": "assistant", "content": response})
-    
-    # Handle Colab notebook generation
-    if any(keyword in prompt.lower() for keyword in ["colab", "notebook"]):
-        notebook_json = ColabGenerator.generate_notebook(
-            st.session_state.dataset_selector,
-            loader
-        )
-        st.download_button(
-            "📥 Download Notebook",
-            data=notebook_json,
-            file_name=f"{st.session_state.dataset_selector}_practice.ipynb",
-            mime="application/json",
-            key=f"notebook_{st.session_state.dataset_selector}"
-        )
+            if st.button("🔍 Explain Dataset", use_container_width=True):
+                with st.expander("Dataset Explanation", expanded=True):
+                    st.markdown(explainer.explain_dataset(selected_dataset))
+            
+            if st.button("💡 Suggest Exercise", use_container_width=True):
+                with st.expander("Practice Exercise", expanded=True):
+                    st.markdown(explainer.suggest_exercise(selected_dataset))
+            
+            if st.button("📝 Create Notebook", use_container_width=True):
+                notebook_path = notebook_builder.build_notebook(selected_dataset)
+                notebook_name = os.path.basename(notebook_path)
+                
+                with open(notebook_path, "rb") as f:
+                    notebook_bytes = f.read()
+                
+                st.markdown(f"""
+                <div class="notebook-link">
+                    <h4 style='color:#2c3e50;'>🎉 Notebook Ready!</h4>
+                    <p style='color:#2c3e50;'><strong>Saved to:</strong> <code style='background:#f5f5f5; padding:2px 4px; border-radius:4px;'>{os.path.abspath(notebook_path)}</code></p>
+                    <div style="margin-top:12px;">
+                        <a href="data:application/x-ipynb+json;base64,{base64.b64encode(notebook_bytes).decode()}" 
+                           download="{notebook_name}" 
+                           class="download-btn">
+                           ⬇️ Download Notebook
+                        </a>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+
+        with col2:
+            st.subheader("💬 Chat Assistant", divider="blue")
+            st.markdown('<div class="chat-container">', unsafe_allow_html=True)
+            
+            # Display chat messages
+            for message in st.session_state.messages:
+                with st.chat_message(message["role"]):
+                    st.markdown(message["content"])
+
+            # Chat input
+            if prompt := st.chat_input("Ask me anything about data analysis"):
+                # Add user message to chat history
+                st.session_state.messages.append({"role": "user", "content": prompt})
+                
+                # Display user message
+                with st.chat_message("user"):
+                    st.markdown(prompt)
+                
+                # Get AI response
+                with st.chat_message("assistant", avatar="🌿"):
+                    response = chatbot.respond(prompt)
+                    st.markdown(response)
+                
+                # Add assistant response to chat history
+                st.session_state.messages.append({"role": "assistant", "content": response})
+            
+            st.markdown('</div>', unsafe_allow_html=True)
+
+    except Exception as e:
+        st.error(f"⚠️ Application error: {str(e)}")
+
+if __name__ == "__main__":
+    main()

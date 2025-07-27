@@ -1,118 +1,112 @@
-from loader import DatasetLoader
-import streamlit as st
+from typing import Dict, List
 import pandas as pd
 
 class DataDevChatbot:
-    def __init__(self, loader: DatasetLoader):
+    def __init__(self, loader, explainer, notebook_builder, kaggle_fetcher):
         self.loader = loader
-        self._initialize_flows()
-    
-    def _initialize_flows(self):
-        """Initialize conversation handlers"""
-        self.flows = {
-            'explanation': self._explain_dataset,
-            'exercise': self._suggest_exercise,
-            'search': self._search_datasets,
-            'colab': self._generate_colab_notebook
-        }
-    
-    def respond(self, user_input: str, current_dataset: str = None) -> str:
-        """Main response generator"""
-        input_lower = user_input.lower()
+        self.explainer = explainer
+        self.notebook_builder = notebook_builder
+        self.kaggle_fetcher = kaggle_fetcher
+        self.current_dataset = None
+
+    def respond(self, query: str) -> str:
+        """Handle user queries with contextual responses"""
+        query = query.lower().strip()
         
-        if any(x in input_lower for x in ['explain', 'tell me about']):
-            return self.flows['explanation'](current_dataset)
-        elif any(x in input_lower for x in ['exercise', 'practice']):
-            return self.flows['exercise'](current_dataset)
-        elif any(x in input_lower for x in ['find', 'search']):
-            return self.flows['search'](user_input)
-        elif any(x in input_lower for x in ['colab', 'notebook']):
-            return self.flows['colab'](current_dataset)
-        else:
-            return self._get_help_message()
-
-    # ===== CORE METHODS =====
-    
-    def _explain_dataset(self, dataset_name: str) -> str:
-        """Explain the selected dataset"""
-        if not dataset_name:
-            return "Please select a dataset first from the sidebar."
+        # Greeting responses
+        if any(word in query for word in ['hi', 'hello', 'hey']):
+            return "Hello! I'm your data analysis assistant. How can I help you today?"
         
-        try:
-            dataset = self.loader.load_dataset(dataset_name)
-            attrs = dataset.attrs
-            
-            explanation = f"""
-            ## {attrs.get('title', dataset_name)} Dataset
-            
-            **Description:** {attrs.get('description', 'No description available')}
-            
-            **Columns:** {', '.join(dataset.columns)}
-            **Sample Questions:**
-            - {attrs.get('example_questions', ['No example questions'])[0]}
-            - {attrs.get('example_questions', [''])[1] if len(attrs.get('example_questions', [])) > 1 else ''}
-            
-            Try exploring with: `df.head()` or `df.describe()`
-            """
-            return explanation
-            
-        except Exception as e:
-            return f"Error explaining dataset: {str(e)}"
-
-    def _suggest_exercise(self, dataset_name: str) -> str:
-        """Suggest an exercise for the dataset"""
-        if not dataset_name:
-            return "Please select a dataset first to get exercises."
+        # Dataset-related questions
+        elif 'dataset' in query or 'data' in query:
+            datasets = self.loader.list_datasets()
+            return f"I can help analyze these datasets: {', '.join(datasets)}\n\nTry asking: 'Explain the [dataset name] dataset' or 'Show me exercises for [dataset name]'"
         
-        try:
-            task = self.loader.get_quick_task(dataset_name)
-            return f"""
-            **Try this exercise:** {task['description']}
-            
-            **Steps:**
-            1. {task['steps'][0]}
-            2. {task['steps'][1]}
-            3. {task['steps'][2]}
-            
-            **Sample Code:**
-            ```python
-            {task.get('sample_code', '# Your code here')}
-            ```
-            """
-        except Exception as e:
-            return f"Error suggesting exercise: {str(e)}"
-
-    def _search_datasets(self, query: str) -> str:
-        """Search available datasets"""
-        try:
-            results = self.loader.search_datasets(query.replace('find', '').replace('search', '').strip())
-            
-            if not results:
-                return "No datasets found matching your search."
-                
-            response = "**Found these datasets:**\n\n"
-            for name, desc in results.items():
-                response += f"- **{name}**: {desc}\n"
-                
-            return response
-            
-        except Exception as e:
-            return f"Search failed: {str(e)}"
-
-    def _generate_colab_notebook(self, dataset_name: str) -> str:
-        """Generate Colab notebook message"""
-        if not dataset_name:
-            return "Please select a dataset first to generate a notebook."
-        return "Click the download button below to get your Colab notebook!"
-
-    def _get_help_message(self) -> str:
-        """Default help message"""
-        return """
-        **How I can help:**
-        - Explain datasets: _"Tell me about the Avengers data"_
-        - Suggest exercises: _"Give me a beginner exercise"_
-        - Search datasets: _"Find datasets about music"_
-        - Create notebooks: _"Make me a Colab notebook"_
+        # Explanation requests
+        elif 'explain' in query:
+            dataset_name = self._extract_dataset_name(query)
+            if dataset_name:
+                return self.explainer.explain_dataset(dataset_name)
+            return "Please specify which dataset to explain. Example: 'Explain the college_majors dataset'"
         
-        Select a dataset from the sidebar to begin!
-        """
+        # Exercise requests
+        elif 'exercise' in query or 'practice' in query:
+            dataset_name = self._extract_dataset_name(query)
+            if dataset_name:
+                return self.explainer.suggest_exercise(dataset_name)
+            return "Please specify which dataset you want exercises for. Example: 'Give me exercises for avengers dataset'"
+        
+        # Statistical questions
+        elif any(term in query for term in ['statistic', 'summary', 'describe', 'mean', 'median']):
+            return self._handle_stats_question(query)
+        
+        # Visualization questions
+        elif any(word in query for word in ['plot', 'visualize', 'graph', 'chart']):
+            return self._handle_viz_question(query)
+        
+        # Default response
+        return self._handle_unknown_query(query)
+
+    def _extract_dataset_name(self, query: str) -> str:
+        """Extract dataset name from query"""
+        datasets = self.loader.list_datasets()
+        for dataset in datasets:
+            if dataset.lower() in query.lower():
+                return dataset
+        return None
+
+    def _handle_stats_question(self, query: str) -> str:
+        """Generate response for statistical questions"""
+        dataset_name = self._extract_dataset_name(query)
+        if dataset_name:
+            return (
+                f"For {dataset_name}, calculate summary statistics using:\n\n"
+                "```python\n"
+                f"df = pd.read_csv('data/{dataset_name}.csv')\n"
+                "# For basic statistics:\n"
+                "df.describe()\n\n"
+                "# For specific columns:\n"
+                "df['column_name'].mean()  # or .median(), .std() etc.\n"
+                "```"
+            )
+        return (
+            "To calculate summary statistics:\n\n"
+            "```python\n"
+            "df.describe()  # Basic stats for all numeric columns\n"
+            "df['column'].mean()  # Average\n"
+            "df['column'].median()  # Middle value\n"
+            "df['column'].std()  # Standard deviation\n"
+            "```"
+        )
+
+    def _handle_viz_question(self, query: str) -> str:
+        """Generate response for visualization questions"""
+        return (
+            "You can create visualizations using:\n\n"
+            "```python\n"
+            "import matplotlib.pyplot as plt\n"
+            "import seaborn as sns\n\n"
+            "# For a histogram:\n"
+            "df['column'].plot(kind='hist')\n\n"
+            "# For a scatter plot:\n"
+            "df.plot.scatter(x='col1', y='col2')\n\n"
+            "# For a correlation heatmap:\n"
+            "sns.heatmap(df.corr(), annot=True)\n"
+            "```"
+        )
+
+    def _handle_unknown_query(self, query: str) -> str:
+        """Handle unrecognized queries"""
+        return (
+            f"I understand you're asking about: '{query}'\n\n"
+            "I can help with:\n"
+            "- Explaining datasets\n"
+            "- Suggesting analysis exercises\n"
+            "- Creating Jupyter notebooks\n"
+            "- Calculating statistics\n"
+            "- Data visualization\n\n"
+            "Try asking:\n"
+            "- 'How do I analyze the avengers dataset?'\n"
+            "- 'Show me visualization examples'\n"
+            "- 'Create a notebook for college_majors'"
+        )
